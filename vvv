@@ -1,0 +1,58 @@
+--[[ ⚡ Infinite Stamina Script (Optimized for Obsidian UI)
+     📦 Paste this in GitHub or Gist and load with:
+     loadstring(game:HttpGet("https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/stamina.lua"))()
+--]]
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Toggles = getgenv().Toggles or {}
+
+local staminaLoop
+local StaminaTbl = {}
+
+-- 🧹 Clear and re-find stamina tables using getgc (only once)
+local function UpdateStaminaTables()
+    table.clear(StaminaTbl)
+    for _, v in pairs(getgc(true)) do
+        if type(v) == "table" and rawget(v, "S") then
+            table.insert(StaminaTbl, v)
+        end
+    end
+end
+
+-- 🚀 Starts or restarts infinite stamina loop
+local function SetupInfiniteStamina()
+    UpdateStaminaTables()
+    if staminaLoop then
+        staminaLoop:Disconnect()
+    end
+    staminaLoop = RunService.RenderStepped:Connect(function()
+        if Toggles.InfiniteStamina then
+            for _, tbl in pairs(StaminaTbl) do
+                tbl.S = 100
+            end
+        end
+    end)
+end
+
+-- 🔁 Hook to respawn
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    if Toggles.InfiniteStamina then
+        SetupInfiniteStamina()
+    end
+end)
+
+-- ✅ Start immediately if toggle is on
+if Toggles.InfiniteStamina then
+    SetupInfiniteStamina()
+end
+
+-- ❌ Allow toggle to stop it externally
+getgenv().StaminaDisconnect = function()
+    if staminaLoop then
+        staminaLoop:Disconnect()
+        staminaLoop = nil
+    end
+end
